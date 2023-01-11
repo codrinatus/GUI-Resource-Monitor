@@ -2,6 +2,7 @@ import psutil
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import time
 
 
 # cpu
@@ -67,27 +68,59 @@ def ram(i, time, percent_ram, available_ram, percent_left, ax_ram):
     plt.subplots_adjust(bottom=0.30)
 
 
-ram_animate()
-# disk
-paths = []
-disk_total = []
-disk_used = []
-disk_free = []
-disk_percentage = []
-for partitions in psutil.disk_partitions():
-    paths.append(partitions[0])
-for i in paths:
-    print(psutil.disk_usage(i))
-    disk_total.append(psutil.disk_usage(i)[0])
-    disk_used.append(psutil.disk_usage(i)[1])
-    disk_free.append(psutil.disk_usage(i)[2])
-    disk_percentage.append(psutil.disk_usage(i)[3])
-print(disk_total)
-print(disk_used)
-print(disk_free)
-print(disk_percentage)
-print("\n network")
+# ram_animate()
 
+
+# disk
+
+def disk_animate():
+    paths = []
+    disk_total = []
+    disk_used = []
+    disk_free = []
+    disk_percentage = []
+    time1 = []
+    read_speed = []
+    write_speed = []
+
+    for partitions in psutil.disk_partitions():
+        paths.append(partitions[0])
+    fig_disk = plt.figure()
+    ax_disk = fig_disk.add_subplot()
+    ani = animation.FuncAnimation(fig_disk, disk,
+                                  fargs=(
+                                      time1, paths, disk_total, disk_used, disk_free, disk_percentage, read_speed,
+                                      write_speed, ax_disk), interval=500)
+    plt.show()
+
+
+def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, read_speed, write_speed, ax_disk):
+    for p in paths:
+        disk_total.append(psutil.disk_usage(p)[0])
+        disk_used.append(psutil.disk_usage(p)[1])
+        disk_free.append(psutil.disk_usage(p)[2])
+        disk_percentage.append(psutil.disk_usage(p)[3])
+    time1.append(datetime.datetime.now().strftime('%H:%M:%S'))
+
+    disk_io_counters = psutil.disk_io_counters(perdisk=False)
+    read_speed.append("{:,.2f}".format(disk_io_counters.read_bytes / 1024))
+    write_speed.append("{:,.2f}".format(disk_io_counters.write_bytes / 1024))
+
+    time1 = time1[-20:]
+    read_speed = read_speed[-20:]
+    write_speed = write_speed[-20:]
+
+    ax_disk.clear()
+    ax_disk.plot(time1, read_speed, '-b', label='read speed')
+    ax_disk.plot(time1, write_speed, '-r', label='write speed')
+    ax_disk.relim()
+    ax_disk.autoscale_view()
+    plt.xticks(rotation=45, ha='right')
+    plt.subplots_adjust(bottom=0.30)
+    plt.legend()
+
+
+disk_animate()
 # network
 print(psutil.net_io_counters(pernic=False, nowrap=True))
 bytes_sent = psutil.net_io_counters(pernic=False, nowrap=True)[0]
