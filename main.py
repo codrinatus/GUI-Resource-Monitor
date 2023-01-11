@@ -3,17 +3,23 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
-cpu_perc = []
-curr_cpu_freq = []
-max_cpu_freq = []
-time = []
-ys = []
-
 
 # cpu
-def cpu(i, time, cpu_perc):
+
+
+def cpu_animate():
+    fig_cpu = plt.figure()
+    ax_cpu = fig_cpu.add_subplot(1, 1, 1)
+    cpu_perc = []
+    curr_cpu_freq = []
+    max_cpu_freq = []
+    time = []
+    ani = animation.FuncAnimation(fig_cpu, cpu, fargs=(time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu),
+                                  interval=500)
+    plt.show()
+
+
+def cpu(i, time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu):
     cpu_perc.append(psutil.cpu_percent(interval=0.5, percpu=False))
     curr_cpu_freq.append(psutil.cpu_freq(percpu=False)[0])
     max_cpu_freq.append(psutil.cpu_freq(percpu=False)[2])
@@ -22,25 +28,46 @@ def cpu(i, time, cpu_perc):
     time = time[-20:]
     cpu_perc = cpu_perc[-20:]
 
-    ax.clear()
-    ax.plot(time, cpu_perc)
+    ax_cpu.clear()
+    ax_cpu.plot(time, cpu_perc)
     plt.xticks(rotation=45, ha='right')
     plt.subplots_adjust(bottom=0.30)
 
 
-ani = animation.FuncAnimation(fig, cpu, fargs=(time, cpu_perc), interval=500)
-plt.show()
-# memory
-print(psutil.virtual_memory())
-total_ram = psutil.virtual_memory()[0]
-available_ram = psutil.virtual_memory()[1]
-percent_ram = psutil.virtual_memory()[2]
-used_ram = psutil.virtual_memory()[3]
-print(total_ram)
-print(available_ram)
-print(percent_ram)
-print("\n disk")
+# cpu_animate()
 
+# memory
+def ram_animate():
+    fig_ram = plt.figure()
+    ax_ram = fig_ram.add_subplot(1, 1, 1)
+    available_ram = []
+    percent_ram = []
+    used_ram = []
+    percent_left = []
+    time = []
+    ani = animation.FuncAnimation(fig_ram, ram, fargs=(time, percent_ram, available_ram, percent_left, ax_ram),
+                                  interval=1000)
+    plt.show()
+
+
+def ram(i, time, percent_ram, available_ram, percent_left, ax_ram):
+    total_ram = psutil.virtual_memory()[0]
+    available_ram.append(psutil.virtual_memory()[1])
+    percent_ram.append(psutil.virtual_memory()[2])
+    used_ram = psutil.virtual_memory()[3]
+    time.append(datetime.datetime.now().strftime('%H:%M:%S'))
+    percent_left.append(100 - psutil.virtual_memory()[2])
+
+    time = time[-20:]
+    percent_ram = percent_ram[-20:]
+
+    ax_ram.clear()
+    ax_ram.plot(time, percent_ram)
+    plt.xticks(rotation=45, ha='right')
+    plt.subplots_adjust(bottom=0.30)
+
+
+ram_animate()
 # disk
 paths = []
 disk_total = []
