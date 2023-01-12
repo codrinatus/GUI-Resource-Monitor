@@ -3,6 +3,7 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
+import tkinter as tk
 
 
 # cpu
@@ -120,18 +121,44 @@ def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, rea
     plt.legend()
 
 
-disk_animate()
-# network
-print(psutil.net_io_counters(pernic=False, nowrap=True))
-bytes_sent = psutil.net_io_counters(pernic=False, nowrap=True)[0]
-bytes_recv = psutil.net_io_counters(pernic=False, nowrap=True)[1]
-print(psutil.net_if_stats())
-net_dict = psutil.net_if_stats()
-# print(psutil.net_connections(kind='inet'))
-net_filt = {k: v for k, v in net_dict.items() if v[0] is not False}
-print(net_filt)
+# disk_animate()
 
-print("\n sensors")
+
+# network
+def network_animate():
+    bytes_sent = []
+    bytes_recv = []
+    time = []
+    net_dict = psutil.net_if_stats()
+    net_filt = {k: v for k, v in net_dict.items() if
+                v[0] is not False}  # filters only the network interfaces that are up
+    fig_network = plt.figure()
+    ax_network = fig_network.add_subplot()
+    ani = animation.FuncAnimation(fig_network, network,
+                                  fargs=(bytes_sent, bytes_recv, net_filt, time, ax_network), interval=1000)
+    plt.show()
+
+
+def network(i, bytes_sent, bytes_recv, net_filt, time, ax_network):
+    bytes_sent.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[0] / 1024))
+    bytes_recv.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[1] / 1024))
+    time.append(datetime.datetime.now().strftime('%H:%M:%S'))
+
+    time = time[-20:]
+    bytes_sent = bytes_sent[-20:]
+    bytes_recv = bytes_recv[-20:]
+
+    ax_network.clear()
+    ax_network.plot(time, bytes_recv, '-b', label='kb/s recieved')
+    ax_network.plot(time, bytes_sent, '-r', label='kb/s sent')
+    ax_network.relim()
+    ax_network.autoscale_view()
+    plt.xticks(rotation=45, ha='right')
+    plt.subplots_adjust(bottom=0.30)
+    plt.legend()
+
+
+#network_animate()
 
 # sensors
 print(psutil.sensors_battery())
