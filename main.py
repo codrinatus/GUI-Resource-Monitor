@@ -1,8 +1,9 @@
+import os
+
 import psutil
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import time
 import tkinter as tk
 import cpuinfo
 
@@ -19,6 +20,10 @@ def cpu_animate():
     curr_cpu_freq = []
     max_cpu_freq = []
     time = []
+
+    print(datetime.datetime.now().strftime('%d %B %Y'), file=cpu_file)
+    print("\n", file=cpu_file)
+
     ani = animation.FuncAnimation(fig_cpu, cpu, fargs=(time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu),
                                   interval=500)
     plt.show()
@@ -29,6 +34,15 @@ def cpu(i, time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu):
     curr_cpu_freq.append(psutil.cpu_freq(percpu=False)[0])
     max_cpu_freq.append(psutil.cpu_freq(percpu=False)[2])
     time.append(datetime.datetime.now().strftime('%H:%M:%S'))
+
+    print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=cpu_file)
+
+    print("CPU frequency: ", file=cpu_file)
+    print(str(curr_cpu_freq[len(curr_cpu_freq) - 1]), file=cpu_file)
+
+    print("CPU percent: ", file=cpu_file)
+    print(str(cpu_perc[len(cpu_perc) - 1]), file=cpu_file)
+    print("\n", file=cpu_file)
 
     time = time[-20:]
     cpu_perc = cpu_perc[-20:]
@@ -54,6 +68,9 @@ def ram_animate():
     used_ram = []
     percent_left = []
     time = []
+
+    print(datetime.datetime.now().strftime('%d %B %Y'), file=ram_file)
+
     ani = animation.FuncAnimation(fig_ram, ram,
                                   fargs=(time, percent_ram, available_ram, percent_left, used_ram, ax_ram),
                                   interval=1000)
@@ -61,11 +78,24 @@ def ram_animate():
 
 
 def ram(i, time, percent_ram, available_ram, percent_left, used_ram, ax_ram):
-    available_ram.append(psutil.virtual_memory()[1])
+    available_ram.append(psutil.virtual_memory()[1] * 0.000001)
     percent_ram.append(psutil.virtual_memory()[2])
-    used_ram.append(psutil.virtual_memory()[3])
+    used_ram.append(psutil.virtual_memory()[3] * 0.000001)
     time.append(datetime.datetime.now().strftime('%H:%M:%S'))
     percent_left.append(100 - psutil.virtual_memory()[2])
+
+    print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=ram_file)
+
+    print("Used RAM: ", file=cpu_file)
+    print(str(used_ram[len(used_ram) - 1]), file=ram_file)
+
+    print("Available RAM: ", file=ram_file)
+    print(str(available_ram[len(available_ram) - 1]), file=ram_file)
+
+    print("Used RAM percent: ", file=ram_file)
+    print(str(percent_ram[len(percent_ram) - 1]), file=ram_file)
+
+    print("\n", file=ram_file)
 
     time = time[-20:]
     percent_ram = percent_ram[-20:]
@@ -93,6 +123,8 @@ def disk_animate():
     read_speed = []
     write_speed = []
 
+    print(datetime.datetime.now().strftime('%d %B %Y'), file=disk_file)
+
     for partitions in psutil.disk_partitions():
         paths.append(partitions[0])
     fig_disk = plt.figure()
@@ -105,16 +137,35 @@ def disk_animate():
 
 
 def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, read_speed, write_speed, ax_disk):
+    print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=disk_file)
+
     for p in paths:
-        disk_total.append(psutil.disk_usage(p)[0])
-        disk_used.append(psutil.disk_usage(p)[1])
-        disk_free.append(psutil.disk_usage(p)[2])
+        disk_total.append(psutil.disk_usage(p)[0] * 0.000001)
+        disk_used.append(psutil.disk_usage(p)[1] * 0.000001)
+        disk_free.append(psutil.disk_usage(p)[2] * 0.000001)
         disk_percentage.append(psutil.disk_usage(p)[3])
+        print("Disk path: ", file=disk_file)
+        print(p, file=disk_file)
+        print("Used space: ", file=disk_file)
+        print(str(disk_used[len(disk_used) - 1]), file=disk_file)
+        print("Free space: ", file=disk_file)
+        print(str(disk_free[len(disk_free) - 1]), file=disk_file)
+
     time1.append(datetime.datetime.now().strftime('%H:%M:%S'))
 
     disk_io_counters = psutil.disk_io_counters(perdisk=False)
     read_speed.append("{:,.2f}".format(disk_io_counters.read_bytes / 1024))
     write_speed.append("{:,.2f}".format(disk_io_counters.write_bytes / 1024))
+
+    print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=disk_file)
+
+    print("Read Speed: ", file=disk_file)
+    print(str(read_speed[len(read_speed) - 1]), file=disk_file)
+
+    print("Write Speed: ", file=disk_file)
+    print(str(write_speed[len(write_speed) - 1]), file=disk_file)
+
+    print("\n", file=disk_file)
 
     time1 = time1[-20:]
     read_speed = read_speed[-20:]
@@ -145,6 +196,9 @@ def network_animate():
     net_dict = psutil.net_if_stats()
     net_filt = {k: v for k, v in net_dict.items() if
                 v[0] is not False}  # filters only the network interfaces that are up
+
+    print(datetime.datetime.now().strftime('%d %B %Y'), file=network_file)
+
     fig_network = plt.figure()
     ax_network = fig_network.add_subplot()
     ani = animation.FuncAnimation(fig_network, network,
@@ -156,6 +210,26 @@ def network(i, bytes_sent, bytes_recv, net_filt, time, ax_network):
     bytes_sent.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[0] / 1024))
     bytes_recv.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[1] / 1024))
     time.append(datetime.datetime.now().strftime('%H:%M:%S'))
+
+    net_dict = psutil.net_if_stats()
+    net_filt = {k: v for k, v in net_dict.items() if
+                v[0] is not False}  # filters only the network interfaces that are up
+
+    print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=network_file)
+    for key in net_filt:
+        print(key, file=network_file)
+        print("Network Speed: ", file=network_file)
+        print(net_filt[key][2], file=network_file)
+        print("Maximum Transmission Unit:", file=network_file)
+        print(net_filt[key][3], file=network_file)
+        print('\n', file=network_file)
+
+    print("kb/s received: ", file=network_file)
+    print(str(bytes_recv[len(bytes_recv) - 1]), file=network_file)
+
+    print("kb/s sent: ", file=network_file)
+    print(str(bytes_sent[len(bytes_sent) - 1]), file=network_file)
+    print('\n', file=network_file)
 
     time = time[-20:]
     bytes_sent = bytes_sent[-20:]
@@ -191,6 +265,11 @@ root.geometry("640x480")
 root.title("GUI Resource Monitor")
 
 
+def cpuHistory():
+    cpu = "notepad.exe cpu.txt"
+    os.system(cpu)
+
+
 def cpuWindow():
     # Toplevel object which will
     # be treated as a new window
@@ -210,8 +289,13 @@ def cpuWindow():
     tk.Label(cpuwindow, text="Maximum CPU Frequency").pack()
     tk.Label(cpuwindow,
              text=psutil.cpu_freq(percpu=False)[2]).pack()
-    # tk.Button(cpuwindow,text="History",command=)
+    tk.Button(cpuwindow, text="History", command=cpuHistory).pack()
     cpu_animate()
+
+
+def ramHistory():
+    ram = "notepad.exe ram.txt"
+    os.system(ram)
 
 
 def ramWindow():
@@ -234,8 +318,13 @@ def ramWindow():
     tk.Label(ramwindow, text="Available ram").pack()
     tk.Label(ramwindow, text=psutil.virtual_memory()[1] * 0.000001).pack()
 
-    # tk.Button(ramwindow,text="History",command=)
+    tk.Button(ramwindow, text="History", command=ramHistory).pack()
     ram_animate()
+
+
+def diskHistory():
+    disk = "notepad.exe disk.txt"
+    os.system(disk)
 
 
 def diskWindow():
@@ -260,8 +349,13 @@ def diskWindow():
         tk.Label(diskwindow, text="Free memory").pack()
         tk.Label(diskwindow, text=disk_free * 0.000001).pack()
 
-    # tk.Button(diskwindow,text="History",command=)
+    tk.Button(diskwindow, text="History", command=diskHistory).pack()
     disk_animate()
+
+
+def networkHistory():
+    network = "notepad.exe network.txt"
+    os.system(network)
 
 
 def networkWindow():
@@ -281,7 +375,7 @@ def networkWindow():
         tk.Label(networkWindow, text="Maximum Transmission Unit:").pack()
         tk.Label(networkWindow, text=net_filt[key][3]).pack()
 
-    # tk.Button(diskwindow,text="History",command=)
+    tk.Button(networkWindow, text="History", command=networkHistory).pack()
     network_animate()
 
 
@@ -289,4 +383,5 @@ tk.Button(root, text="CPU", command=cpuWindow, height=7, width=7).pack(fill=tk.X
 tk.Button(root, text="RAM", command=ramWindow, height=7, width=7).pack(fill=tk.X)
 tk.Button(root, text="DISK", command=diskWindow, height=7, width=7).pack(fill=tk.X)
 tk.Button(root, text="NETWORK", command=networkWindow, height=7, width=7).pack(fill=tk.X)
+
 root.mainloop()
