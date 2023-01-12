@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 import tkinter as tk
-
+import cpuinfo
 
 # cpu
+
+cpu_name = cpuinfo.get_cpu_info()['brand_raw']
+cpu_file = open('cpu.txt', "a+")
 
 
 def cpu_animate():
@@ -39,6 +42,10 @@ def cpu(i, time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu):
 # cpu_animate()
 
 # memory
+total_ram = psutil.virtual_memory()[0]
+ram_file = open('ram.txt', "a+")
+
+
 def ram_animate():
     fig_ram = plt.figure()
     ax_ram = fig_ram.add_subplot(1, 1, 1)
@@ -47,16 +54,16 @@ def ram_animate():
     used_ram = []
     percent_left = []
     time = []
-    ani = animation.FuncAnimation(fig_ram, ram, fargs=(time, percent_ram, available_ram, percent_left, ax_ram),
+    ani = animation.FuncAnimation(fig_ram, ram,
+                                  fargs=(time, percent_ram, available_ram, percent_left, used_ram, ax_ram),
                                   interval=1000)
     plt.show()
 
 
-def ram(i, time, percent_ram, available_ram, percent_left, ax_ram):
-    total_ram = psutil.virtual_memory()[0]
+def ram(i, time, percent_ram, available_ram, percent_left, used_ram, ax_ram):
     available_ram.append(psutil.virtual_memory()[1])
     percent_ram.append(psutil.virtual_memory()[2])
-    used_ram = psutil.virtual_memory()[3]
+    used_ram.append(psutil.virtual_memory()[3])
     time.append(datetime.datetime.now().strftime('%H:%M:%S'))
     percent_left.append(100 - psutil.virtual_memory()[2])
 
@@ -73,6 +80,8 @@ def ram(i, time, percent_ram, available_ram, percent_left, ax_ram):
 
 
 # disk
+disk_file = open('disk.txt', "a+")
+
 
 def disk_animate():
     paths = []
@@ -125,6 +134,10 @@ def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, rea
 
 
 # network
+
+network_file = open('network.txt', "a+")
+
+
 def network_animate():
     bytes_sent = []
     bytes_recv = []
@@ -158,16 +171,122 @@ def network(i, bytes_sent, bytes_recv, net_filt, time, ax_network):
     plt.legend()
 
 
-#network_animate()
+# network_animate()
 
 # sensors
-print(psutil.sensors_battery())
+# print(psutil.sensors_battery())
 battery_percent = psutil.sensors_battery()[0]
 battery_plugged = psutil.sensors_battery()[2]
 if battery_plugged is False:
     battery_sec_left = datetime.timedelta(seconds=psutil.sensors_battery()[1])
 else:
     battery_sec_left = False
-print(battery_percent)
-print(battery_sec_left)
-print(battery_plugged)
+# print(battery_percent)
+# print(battery_sec_left)
+# print(battery_plugged)
+
+# GUI
+root = tk.Tk()
+root.geometry("640x480")
+root.title("GUI Resource Monitor")
+
+
+def cpuWindow():
+    # Toplevel object which will
+    # be treated as a new window
+    cpuwindow = tk.Toplevel(root)
+
+    # sets the title of the
+    # Toplevel widget
+    cpuwindow.title("CPU")
+
+    # sets the geometry of toplevel
+    cpuwindow.geometry("640x480")
+
+    # A Label widget to show in toplevel
+    tk.Label(cpuwindow, text=cpu_name).pack()
+    tk.Label(cpuwindow, text="Current CPU Frequency").pack()
+    tk.Label(cpuwindow, text=psutil.cpu_freq(percpu=False)[0]).pack()
+    tk.Label(cpuwindow, text="Maximum CPU Frequency").pack()
+    tk.Label(cpuwindow,
+             text=psutil.cpu_freq(percpu=False)[2]).pack()
+    # tk.Button(cpuwindow,text="History",command=)
+    cpu_animate()
+
+
+def ramWindow():
+    # Toplevel object which will
+    # be treated as a new window
+    ramwindow = tk.Toplevel(root)
+
+    # sets the title of the
+    # Toplevel widget
+    ramwindow.title("RAM")
+
+    # sets the geometry of toplevel
+    ramwindow.geometry("640x480")
+
+    # A Label widget to show in toplevel
+    tk.Label(ramwindow, text="Total ram").pack()
+    tk.Label(ramwindow, text=total_ram * 0.000001).pack()
+    tk.Label(ramwindow, text="Used ram").pack()
+    tk.Label(ramwindow, text=psutil.virtual_memory()[3] * 0.000001).pack()
+    tk.Label(ramwindow, text="Available ram").pack()
+    tk.Label(ramwindow, text=psutil.virtual_memory()[1] * 0.000001).pack()
+
+    # tk.Button(ramwindow,text="History",command=)
+    ram_animate()
+
+
+def diskWindow():
+    diskwindow = tk.Toplevel(root)
+
+    diskwindow.title("DISK")
+
+    diskwindow.geometry("640x480")
+
+    paths = []
+    for partitions in psutil.disk_partitions():
+        paths.append(partitions[0])
+    for p in paths:
+        tk.Label(diskwindow, text=p).pack()
+        disk_total = psutil.disk_usage(p)[0]
+        disk_used = psutil.disk_usage(p)[1]
+        disk_free = psutil.disk_usage(p)[2]
+        tk.Label(diskwindow, text="Total disk capacity").pack()
+        tk.Label(diskwindow, text=disk_total * 0.000001).pack()
+        tk.Label(diskwindow, text="Used memory").pack()
+        tk.Label(diskwindow, text=disk_used * 0.000001).pack()
+        tk.Label(diskwindow, text="Free memory").pack()
+        tk.Label(diskwindow, text=disk_free * 0.000001).pack()
+
+    # tk.Button(diskwindow,text="History",command=)
+    disk_animate()
+
+
+def networkWindow():
+    networkWindow = tk.Toplevel(root)
+
+    networkWindow.title("NETWORK")
+
+    networkWindow.geometry("640x480")
+
+    net_dict = psutil.net_if_stats()
+    net_filt = {k: v for k, v in net_dict.items() if
+                v[0] is not False}  # filters only the network interfaces that are up
+    for key in net_filt:
+        tk.Label(networkWindow, text=key).pack()
+        tk.Label(networkWindow, text="Speed:").pack()
+        tk.Label(networkWindow, text=net_filt[key][2]).pack()
+        tk.Label(networkWindow, text="Maximum Transmission Unit:").pack()
+        tk.Label(networkWindow, text=net_filt[key][3]).pack()
+
+    # tk.Button(diskwindow,text="History",command=)
+    network_animate()
+
+
+tk.Button(root, text="CPU", command=cpuWindow, height=7, width=7).pack(fill=tk.X)
+tk.Button(root, text="RAM", command=ramWindow, height=7, width=7).pack(fill=tk.X)
+tk.Button(root, text="DISK", command=diskWindow, height=7, width=7).pack(fill=tk.X)
+tk.Button(root, text="NETWORK", command=networkWindow, height=7, width=7).pack(fill=tk.X)
+root.mainloop()
