@@ -14,6 +14,10 @@ cpu_file = open('cpu.txt', "a+")
 
 
 def cpu_animate():
+    """
+    Creates a real-time line chart of CPU usage using the matplotlib library. The chart updates every 0.5 seconds.
+    :return:launches the animation for the line chart
+    """
     fig_cpu = plt.figure()
     ax_cpu = fig_cpu.add_subplot(1, 1, 1)
     cpu_perc = []
@@ -30,6 +34,12 @@ def cpu_animate():
 
 
 def cpu(i, time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu):
+    """
+    Appends the current time, CPU usage, current CPU frequency, and maximum CPU frequency to their respective lists,it
+    writes them in the log and plots the CPU usage over time on the chart.
+    This function is called every 0.5 seconds by the cpu_animate() function.
+
+    """
     cpu_perc.append(psutil.cpu_percent(interval=0.5, percpu=False))
     curr_cpu_freq.append(psutil.cpu_freq(percpu=False)[0])
     max_cpu_freq.append(psutil.cpu_freq(percpu=False)[2])
@@ -53,14 +63,16 @@ def cpu(i, time, cpu_perc, curr_cpu_freq, max_cpu_freq, ax_cpu):
     plt.subplots_adjust(bottom=0.30)
 
 
-# cpu_animate()
-
 # memory
 total_ram = psutil.virtual_memory()[0]
 ram_file = open('ram.txt', "a+")
 
 
 def ram_animate():
+    """
+    Creates a real-time line chart of RAM usage using the matplotlib library. The chart updates every 1 second.
+    :return: launches the animation for the line chart
+    """
     fig_ram = plt.figure()
     ax_ram = fig_ram.add_subplot(1, 1, 1)
     available_ram = []
@@ -78,6 +90,27 @@ def ram_animate():
 
 
 def ram(i, time, percent_ram, available_ram, percent_left, used_ram, ax_ram):
+    """
+    Appends the current time, percent of used RAM, current available RAM, current used RAM,
+    and percent of left RAM to their respective lists,writes them to the respective log file and plots the
+    percent of used RAM over time on the chart.
+    This function is called every 1 second by the ram_animate() function.
+    Parameters:
+    i : int (optional,not used)
+        current frame number in the animation.
+    time: list
+        list of the time when the memory usage was logged.
+    percent_ram : list
+        list of the percent of used ram.
+    available_ram : list
+        list of the available ram in MB.
+    percent_left : list
+        list of the percent of left ram.
+    used_ram : list
+        list of the used ram in MB.
+    ax_ram : Axes
+        Axes object of the RAM usage chart
+    """
     available_ram.append(psutil.virtual_memory()[1] * 0.000001)
     percent_ram.append(psutil.virtual_memory()[2])
     used_ram.append(psutil.virtual_memory()[3] * 0.000001)
@@ -86,7 +119,7 @@ def ram(i, time, percent_ram, available_ram, percent_left, used_ram, ax_ram):
 
     print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=ram_file)
 
-    print("Used RAM: ", file=cpu_file)
+    print("Used RAM: ", file=ram_file)
     print(str(used_ram[len(used_ram) - 1]), file=ram_file)
 
     print("Available RAM: ", file=ram_file)
@@ -106,14 +139,15 @@ def ram(i, time, percent_ram, available_ram, percent_left, used_ram, ax_ram):
     plt.subplots_adjust(bottom=0.30)
 
 
-# ram_animate()
-
-
 # disk
 disk_file = open('disk.txt', "a+")
 
 
 def disk_animate():
+    """
+        Creates a real-time line chart of disk usage using the matplotlib library. The chart updates every 1 second.
+    :return: launches the animation for the line chart
+    """
     paths = []
     disk_total = []
     disk_used = []
@@ -137,6 +171,13 @@ def disk_animate():
 
 
 def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, read_speed, write_speed, ax_disk):
+    """
+    Appends the current time, percent of used disk, available disk space, used disk space, read speed and write speed
+    to their respective lists,writes them to the respective log file and plots the
+    read and write speeds in kilobytes over time on the chart.
+    This function is called every 0.5 second by the disk_animate() function.
+    :param paths: paths of the mounted disk drives
+    """
     print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=disk_file)
 
     for p in paths:
@@ -181,15 +222,16 @@ def disk(i, time1, paths, disk_total, disk_used, disk_free, disk_percentage, rea
     plt.legend()
 
 
-# disk_animate()
-
-
 # network
 
 network_file = open('network.txt', "a+")
 
 
 def network_animate():
+    """
+    Creates a real-time line chart of network usage using the matplotlib library. The chart updates every 1 second.
+    :return: launches the animation for the line chart
+    """
     bytes_sent = []
     bytes_recv = []
     time = []
@@ -207,13 +249,20 @@ def network_animate():
 
 
 def network(i, bytes_sent, bytes_recv, net_filt, time, ax_network):
+    """
+    Appends the kilobytes sent, kilobytes received,information about the network interfaces that are up and time
+    to their respective lists, writes them to the respective log file and plots the kilobytes sent and recieved over time
+    on the chart.
+    This function is called every 1 second by the network_animate() function.
+    :param net_filt: a dictionary with all network interfaces that are up
+    """
     bytes_sent.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[0] / 1024))
     bytes_recv.append("{:,.2f}".format(psutil.net_io_counters(pernic=False)[1] / 1024))
     time.append(datetime.datetime.now().strftime('%H:%M:%S'))
 
     net_dict = psutil.net_if_stats()
     net_filt = {k: v for k, v in net_dict.items() if
-                v[0] is not False}  # filters only the network interfaces that are up
+                v[0] is not False}
 
     print(str(datetime.datetime.now().strftime('%H:%M:%S')), file=network_file)
     for key in net_filt:
@@ -255,9 +304,6 @@ if battery_plugged is False:
     battery_sec_left = datetime.timedelta(seconds=psutil.sensors_battery()[1])
 else:
     battery_sec_left = False
-# print(battery_percent)
-# print(battery_sec_left)
-# print(battery_plugged)
 
 # GUI
 root = tk.Tk()
@@ -266,23 +312,25 @@ root.title("GUI Resource Monitor")
 
 
 def cpuHistory():
+    """
+    Opens the notepad application and displays the contents of the file 'cpu.txt' which contains the logged CPU usage history.
+    """
     cpu = "notepad.exe cpu.txt"
     os.system(cpu)
 
 
 def cpuWindow():
-    # Toplevel object which will
-    # be treated as a new window
+    """
+      Creates a Toplevel window for displaying the current CPU frequency and maximum CPU frequency using the tkinter library.
+    Also, it has a button labeled "History" that calls the cpuHistory() function when clicked.
+    """
     cpuwindow = tk.Toplevel(root)
 
-    # sets the title of the
-    # Toplevel widget
+
     cpuwindow.title("CPU")
 
-    # sets the geometry of toplevel
     cpuwindow.geometry("640x480")
 
-    # A Label widget to show in toplevel
     tk.Label(cpuwindow, text=cpu_name).pack()
     tk.Label(cpuwindow, text="Current CPU Frequency").pack()
     tk.Label(cpuwindow, text=psutil.cpu_freq(percpu=False)[0]).pack()
@@ -294,23 +342,27 @@ def cpuWindow():
 
 
 def ramHistory():
+    """
+        Opens the notepad application and displays the contents of the file 'ram.txt' which contains the logged RAM usage history.
+
+    """
     ram = "notepad.exe ram.txt"
     os.system(ram)
 
 
 def ramWindow():
-    # Toplevel object which will
-    # be treated as a new window
+    """
+     Creates a Toplevel window for displaying the Total ram available,Used ram and Available ram using the tkinter library.
+    Also, it has a button labeled "History" that calls the ramHistory() function when clicked.
+    """
+
     ramwindow = tk.Toplevel(root)
 
-    # sets the title of the
-    # Toplevel widget
+
     ramwindow.title("RAM")
 
-    # sets the geometry of toplevel
     ramwindow.geometry("640x480")
 
-    # A Label widget to show in toplevel
     tk.Label(ramwindow, text="Total ram").pack()
     tk.Label(ramwindow, text=total_ram * 0.000001).pack()
     tk.Label(ramwindow, text="Used ram").pack()
@@ -323,11 +375,20 @@ def ramWindow():
 
 
 def diskHistory():
+    """
+        Opens the notepad application and displays the contents of the file 'disk.txt' which contains the logged disk usage history.
+
+        """
     disk = "notepad.exe disk.txt"
     os.system(disk)
 
 
 def diskWindow():
+    """
+       Creates a Toplevel window for displaying partition info using the tkinter library.
+      Also, it has a button labeled "History" that calls the diskHistory() function when clicked.
+      """
+
     diskwindow = tk.Toplevel(root)
 
     diskwindow.title("DISK")
@@ -354,11 +415,19 @@ def diskWindow():
 
 
 def networkHistory():
+    """
+            Opens the notepad application and displays the contents of the file 'disk.txt' which contains the logged disk usage history.
+
+            """
     network = "notepad.exe network.txt"
     os.system(network)
 
 
 def networkWindow():
+    """
+         Creates a Toplevel window for displaying network interfaces info using the tkinter library.
+        Also, it has a button labeled "History" that calls the diskHistory() function when clicked.
+        """
     networkWindow = tk.Toplevel(root)
 
     networkWindow.title("NETWORK")
@@ -367,7 +436,7 @@ def networkWindow():
 
     net_dict = psutil.net_if_stats()
     net_filt = {k: v for k, v in net_dict.items() if
-                v[0] is not False}  # filters only the network interfaces that are up
+                v[0] is not False}
     for key in net_filt:
         tk.Label(networkWindow, text=key).pack()
         tk.Label(networkWindow, text="Speed:").pack()
